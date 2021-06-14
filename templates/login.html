@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-JNCL4W6GCS"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-JNCL4W6GCS');
+    </script>
+    <title>Valorant Daily Skins</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/15181efa86.js" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+
+
+        window.onload = function () {
+            document.getElementById("submit").onclick = function fun() {
+                console.log("clicked")
+                var block_to_insert;
+                var container_block;
+                block_to_insert = document.createElement('div');
+                block_to_insert.className = 'loader';
+                block_to_insert.style.width = 100;
+                block_to_insert.style.height = 100;
+                container_block = document.getElementById('loaderParent');
+                container_block.style.paddingLeft = "50%";
+                container_block.appendChild(block_to_insert);
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.0/css/bulma.min.css" />
+    <!-- <link rel="stylesheet" type="text/css" href="../css/register.css"> -->
+    <style>
+        .va {
+            display: flex;
+            align-items: center;
+        }
+
+        loader {
+            border: 16px solid #f3f3f3;
+            /* Light grey */
+            border-top: 16px solid #3498db;
+            /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 3s linear infinite;
+            display: none !important;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+{% block content %}
+
+<body>
+    <section class="container">
+        <div class="columns is-multiline">
+            <div class="column is-8 is-offset-2 register">
+                <div class="columns">
+                    <div class="column left">
+                        <h1 class="title is-1">Valorant Daily Skins</h1>
+                        <h2 class="subtitle colored is-4">Know today's in-store skins without starting the game</h2>
+                        <p> This is a fan-made project.
+                            Riot Games does not endorse, sponsor or affiliate with this project. Riot Games, and all
+                            associated
+                            properties are trademarks or registered trademarks of Riot Games, Inc. </p><br>
+                        <small>Made by <a href="mailto:deepsidh912@gmail.com">Deep.</a></small>
+
+                    </div>
+                    <div class="column right has-text-centered">
+                        {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                        <div class="notification is-danger">
+                            {{ messages[0] }}<br> Please enter credentials again</a>.
+                        </div>
+                        {% endif %}
+                        {% endwith %}
+                        <h1 class="title is-4">Enter Details</h1>
+                        <p class="description">Credentials are never stored.</p>
+                        <form method="POST" action="/submit">
+                            <div class="field">
+                                <div class="control">
+                                    <input class="input is-medium" type="text" placeholder="Userame" name="username"
+                                        autofocus="">
+                                </div>
+                            </div>
+
+                            <div class="field">
+                                <div class="control">
+                                    <input class="input is-medium" type="password" placeholder="Password"
+                                        name="password">
+                                </div>
+                            </div>
+
+                            <h3>Select Region :</h3>
+                            <div class="control">
+                                <label class="radio">
+                                    <input type="radio" name="region" value="eu">
+                                    Europe
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="region" value="na">
+                                    North America
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="region" value="ap" checked>
+                                    Asia Pacific
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" name="region" value="kr">
+                                    Korea
+                                </label>
+                            </div>
+                            <div id="loaderParent"></div><br>
+                            <button class="button is-block is-primary is-fullwidth is-medium"
+                                id="submit">Submit</button>
+                            <br />
+                            <small><em>If you'd like to setup an alert for a skin of your choice such
+                                    as alerting when the Reaver Vandal arrives, check <a
+                                        href="https://forms.gle/dYfaKKscWZPBiDcN9">this out.</a></em></small>
+
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- <div class="column is-8 is-offset-2">
+                <br>
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <span class="icon">
+                                <i class="fab fa-twitter"></i>
+                            </span> &emsp;
+                            <span class="icon">
+                                <i class="fab fa-facebook"></i>
+                            </span> &emsp;
+                            <span class="icon">
+                                <i class="fab fa-instagram"></i>
+                            </span> &emsp;
+                            <span class="icon">
+                                <i class="fab fa-github"></i>
+                            </span> &emsp;
+                            <span class="icon">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <small class="level-item" style="color: var(--textLight)">
+                            &copy; Super Cool Website. All Rights Reserved.
+                        </small>
+                    </div>
+                </nav>
+            </div> -->
+        </div>
+    </section>
+</body>
+{% endblock %}
+
+<style>
+    :root {
+        --brandColor: hsl(166, 67%, 51%);
+        --background: rgb(247, 247, 247);
+        --textDark: hsla(0, 0%, 0%, 0.66);
+        --textLight: hsla(0, 0%, 0%, 0.33);
+    }
+
+    body {
+        background: var(--background);
+        height: 100vh;
+        color: var(--textDark);
+    }
+
+    .field:not(:last-child) {
+        margin-bottom: 1rem;
+    }
+
+    .register {
+        margin-top: 10rem;
+        background: white;
+        border-radius: 10px;
+    }
+
+    .left,
+    .right {
+        padding: 4.5rem;
+    }
+
+    .left {
+        border-right: 5px solid var(--background);
+    }
+
+    .left .title {
+        font-weight: 800;
+        letter-spacing: -2px;
+    }
+
+    .left .colored {
+        color: var(--brandColor);
+        font-weight: 500;
+        margin-top: 1rem !important;
+        letter-spacing: -1px;
+    }
+
+    .left p {
+        color: var(--textLight);
+        font-size: 1.15rem;
+    }
+
+    .right .title {
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+
+    .right .description {
+        margin-top: 1rem;
+        margin-bottom: 1rem !important;
+        color: var(--textLight);
+        font-size: 1.15rem;
+    }
+
+    .right small {
+        color: var(--textLight);
+    }
+
+    input {
+        font-size: 1rem;
+    }
+
+    input:focus {
+        border-color: var(--brandColor) !important;
+        box-shadow: 0 0 0 1px var(--brandColor) !important;
+    }
+
+    .fab,
+    .fas {
+        color: var(--textLight);
+        margin-right: 1rem;
+    }
+</style>
+
+</html>
