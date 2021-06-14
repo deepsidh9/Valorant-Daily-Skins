@@ -5,6 +5,8 @@ This project gets your daily in-store skins in Valorant without starting the act
 ## Windows Executable Version
 Python is used to authenticate users, fetch skins and create the graphical user interface via Tkinter. Pyinstaller is used to create the Windows executable file.
 
+You can also directly download the file which runs directly on your Windows device from [here](https://github.com/deepsidh9/Valorant-Daily-Skins/releases/tag/windowsapp-v1.0)
+
 PS.Check out this project's Flask Web App Code [here](https://github.com/deepsidh9/Valorant-Daily-Skins/tree/flaskwebapp)  and its hosting on https://trackvalorantskins.com
 ## Installation
 ### Prerequisites : Python3.x and Pyinstaller
