@@ -1,10 +1,6 @@
-import json
 import urllib.parse
 
 import requests
-
-with open('final_skins.json') as f:
-    all_skins = json.load(f)
 
 
 class ValorantAPI(object):
@@ -27,6 +23,8 @@ class ValorantAPI(object):
 
         self.user_info, self.game_name = self.get_user_info()
 
+        self.all_skins = self.get_skins()
+
         self.player_store = self.get_player_store()
 
     def get_cookies(self):
@@ -42,7 +40,7 @@ class ValorantAPI(object):
         }
         r = requests.post(
             'https://auth.riotgames.com/api/v1/authorization', headers=headers, json=data)
-        self.validate_request(r,"Cookie Space")
+        self.validate_request(r, "Cookie Space")
         cookies = r.cookies
 
         return cookies
@@ -58,7 +56,7 @@ class ValorantAPI(object):
         }
         r = requests.put('https://auth.riotgames.com/api/v1/authorization',
                          headers=headers, json=data, cookies=self.cookies)
-        self.validate_request(r,"Access Token Space")
+        self.validate_request(r, "Access Token Space")
         uri = r.json()['response']['parameters']['uri']
         jsonUri = urllib.parse.parse_qs(uri)
 
@@ -73,7 +71,7 @@ class ValorantAPI(object):
         }
         r = requests.post('https://entitlements.auth.riotgames.com/api/token/v1',
                           headers=headers, json={}, cookies=self.cookies)
-        self.validate_request(r,"Entitlment Token Space")
+        self.validate_request(r, "Entitlment Token Space")
 
         entitlements_token = r.json()['entitlements_token']
 
@@ -87,7 +85,7 @@ class ValorantAPI(object):
 
         r = requests.post('https://auth.riotgames.com/userinfo',
                           headers=headers, json={}, cookies=self.cookies)
-        self.validate_request(r,"User Info Space")
+        self.validate_request(r, "User Info Space")
         jsonData = r.json()
         user_info = jsonData['sub']
         name = jsonData['acct']['game_name']
@@ -118,19 +116,18 @@ class ValorantAPI(object):
         }
         r = requests.get(
             f'https://pd.{self.region}.a.pvp.net/store/v2/storefront/{self.user_info}', headers=headers, cookies=self.cookies)
-        self.validate_request(r,"Player Store Space")
+        self.validate_request(r, "Player Store Space")
         jsonData = r.json()
         store_skins = jsonData['SkinsPanelLayout']['SingleItemOffers']
         final_result = [
-            skin for skin in all_skins if skin['uuid'] in store_skins]
+            skin for skin in self.all_skins if skin['uuid'] in store_skins]
         return final_result
 
-    def get_new_skins(self):
-        pass
-
-    def flatten_skins(self, new_skins):
+    def get_skins(self):
+        all_skins = requests.get(
+            "https://valorant-api.com/v1/weapons/skins").json()["data"]
         flat_skins = []
-        for skin in new_skins:
+        for skin in all_skins:
             if 'chromas' in skin:
                 for chroma in skin['chromas']:
                     flat_skins.append(chroma)
@@ -138,7 +135,9 @@ class ValorantAPI(object):
                 for level in skin['levels']:
                     if level != None:
                         flat_skins.append(level)
-    
-    def validate_request(self, request,origin):
+        return flat_skins
+
+    def validate_request(self, request, origin):
         if "error" in request.json():
-            raise Exception("Something didn't work in "+origin+" because :"+request.json()['error'])
+            raise Exception("Something didn't work in "+origin +
+                            " because :"+request.json()['error'])
