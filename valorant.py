@@ -1,49 +1,49 @@
-import urllib.parse
-
+import ssl
 import requests
+from collections import OrderedDict
+import re
+from requests.adapters import HTTPAdapter
+from urllib3 import PoolManager
+
+
+class SSLAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(num_pools=connections,
+                                       maxsize=maxsize,
+                                       block=block,
+                                       ssl_version=ssl.PROTOCOL_TLSv1_2)
 
 
 class ValorantAPI(object):
-    access_token = None
-    cookies = None
-    entitlements_token = None
-    player_store = None
 
-    def __init__(self, username, password, region, client_ip):
+    def __init__(self, username, password, region):
         self.username = username
         self.password = password
         self.region = region
-        self.client_ip = client_ip
-
-        self.cookies = self.get_cookies()
-
-        self.access_token = self.get_access_token()
-
-        self.entitlements_token = self.get_entitlements_token()
-
-        self.user_info, self.game_name = self.get_user_info()
-
+        self.authenticate()
         self.all_skins = self.get_skins()
-
         self.player_store = self.get_player_store()
+    
+    def mount_session(self):
 
-    def get_cookies(self):
+        self.headers = OrderedDict({
+            'User-Agent': 'RiotClient/43.0.1.4195386.4190634 rso-auth (Windows;10;;Professional, x64)'
+        })
+
+        self.session = requests.session()
+        self.session.mount(
+            'https://auth.riotgames.com/api/v1/authorization', SSLAdapter())
+        self.session.headers = self.headers
+
         data = {
             'client_id': 'play-valorant-web-prod',
             'nonce': '1',
-            'redirect_uri': 'https://playvalorant.com/',
+            'redirect_uri': 'https://playvalorant.com/opt_in',
             'response_type': 'token id_token',
-            'scope': 'account openid',
         }
-        headers = {
-            'X-Forwarded-For': self.client_ip
-        }
-        r = requests.post(
-            'https://auth.riotgames.com/api/v1/authorization', headers=headers, json=data)
-        self.validate_request(r, "Cookie Space")
-        cookies = r.cookies
-
-        return cookies
+        r = self.session.post(f'https://auth.riotgames.com/api/v1/authorization', json=data,
+                              headers=self.headers)
+        self.validate_request(r, "Session Mount")
 
     def get_access_token(self):
         data = {
@@ -51,77 +51,48 @@ class ValorantAPI(object):
             'username': self.username,
             'password': self.password
         }
-        headers = {
-            'X-Forwarded-For': self.client_ip
-        }
-        r = requests.put('https://auth.riotgames.com/api/v1/authorization',
-                         headers=headers, json=data, cookies=self.cookies)
-        self.validate_request(r, "Access Token Space")
-        uri = r.json()['response']['parameters']['uri']
-        jsonUri = urllib.parse.parse_qs(uri)
-
-        access_token = jsonUri['https://playvalorant.com/#access_token'][0]
-
-        return access_token
+        r = self.session.put(
+            f'https://auth.riotgames.com/api/v1/authorization', json=data, headers=self.headers)
+        self.validate_request(r, "Access Token")
+        pattern = re.compile(
+            'access_token=((?:[a-zA-Z]|\d|\.|-|_)*).*id_token=((?:[a-zA-Z]|\d|\.|-|_)*).*expires_in=(\d*)')
+        data = pattern.findall(r.json()['response']['parameters']['uri'])[0]
+        self.access_token = data[0]
 
     def get_entitlements_token(self):
-        headers = {
+
+        self.headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Host': "entitlements.auth.riotgames.com",
+            'User-Agent': 'RiotClient/43.0.1.4195386.4190634 rso-auth (Windows;10;;Professional, x64)',
             'Authorization': f'Bearer {self.access_token}',
-            'X-Forwarded-For': self.client_ip
         }
-        r = requests.post('https://entitlements.auth.riotgames.com/api/token/v1',
-                          headers=headers, json={}, cookies=self.cookies)
-        self.validate_request(r, "Entitlment Token Space")
-
-        entitlements_token = r.json()['entitlements_token']
-
-        return entitlements_token
+        r = self.session.post(
+            'https://entitlements.auth.riotgames.com/api/token/v1', headers=self.headers, json={})
+        self.validate_request(r, "Entitlment Token")
+        self.entitlements_token = r.json()['entitlements_token']
 
     def get_user_info(self):
-        headers = {
+        self.headers = {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Host': "auth.riotgames.com",
+            'User-Agent': 'RiotClient/43.0.1.4195386.4190634 rso-auth (Windows;10;;Professional, x64)',
             'Authorization': f'Bearer {self.access_token}',
-            'X-Forwarded-For': self.client_ip
         }
 
-        r = requests.post('https://auth.riotgames.com/userinfo',
-                          headers=headers, json={}, cookies=self.cookies)
+        r = self.session.post('https://auth.riotgames.com/userinfo',
+                              headers=self.headers, json={})
         self.validate_request(r, "User Info Space")
-        jsonData = r.json()
-        user_info = jsonData['sub']
-        name = jsonData['acct']['game_name']
-        tag = jsonData['acct']['tag_line']
-        game_name = name + ' #' + tag
+        self.user_id = r.json()['sub']
+        self.headers['X-Riot-Entitlements-JWT'] = self.entitlements_token
+        del self.headers['Host']
+        self.session.close()
 
-        return user_info, game_name
-
-    def get_match_history(self):
-        headers = {
-            'Authorization': f'Bearer {self.access_token}',
-            'X-Riot-Entitlements-JWT': f'{self.entitlements_token}',
-            'X-Forwarded-For': self.client_ip,
-            'X-Riot-ClientPlatform': "ew0KCSJwbGF0Zm9ybVR5cGUiOiAiUEMiLA0KCSJwbGF0Zm9ybU9TIjogIldpbmRvd3MiLA0KCSJwbGF0Zm9ybU9TVmVyc2lvbiI6ICIxMC4wLjE5MDQyLjEuMjU2LjY0Yml0IiwNCgkicGxhdGZvcm1DaGlwc2V0IjogIlVua25vd24iDQp9"
-        }
-        r = requests.get(
-            f'https://pd.{self.region}.a.pvp.net/mmr/v1/players/{self.user_info}/competitiveupdates?startIndex=0&endIndex=20', headers=headers, cookies=self.cookies)
-
-        jsonData = r.json()
-
-        return jsonData
-
-    def get_player_store(self):
-        headers = {
-            'Authorization': f'Bearer {self.access_token}',
-            'X-Riot-Entitlements-JWT': f'{self.entitlements_token}',
-            'X-Forwarded-For': self.client_ip,
-        }
-        r = requests.get(
-            f'https://pd.{self.region}.a.pvp.net/store/v2/storefront/{self.user_info}', headers=headers, cookies=self.cookies)
-        self.validate_request(r, "Player Store Space")
-        jsonData = r.json()
-        store_skins = jsonData['SkinsPanelLayout']['SingleItemOffers']
-        final_result = [
-            skin for skin in self.all_skins if skin['uuid'] in store_skins]
-        return final_result
+    def authenticate(self):
+        self.mount_session()
+        self.get_access_token()
+        self.get_entitlements_token()
+        self.get_user_info()
 
     def get_skins(self):
         all_skins = requests.get(
@@ -137,7 +108,20 @@ class ValorantAPI(object):
                         flat_skins.append(level)
         return flat_skins
 
+    def get_player_store(self):
+        r = requests.get(
+            f'https://pd.{self.region}.a.pvp.net/store/v2/storefront/{self.user_id}', headers=self.headers)
+        
+        self.validate_request(r, "Player Store Space")
+        jsonData = r.json()
+        store_skins = jsonData['SkinsPanelLayout']['SingleItemOffers']
+        final_result = [
+            skin for skin in self.all_skins if skin['uuid'] in store_skins]
+        return final_result
+
     def validate_request(self, request, origin):
+        if request.status_code!= 200:
+            raise Exception("Something didn't work in "+origin)
         if "error" in request.json():
             raise Exception("Something didn't work in "+origin +
                             " because :"+request.json()['error'])

@@ -17,20 +17,20 @@ def login():
 @app.route('/submit', methods=['GET', 'POST'])
 @cross_origin(allow_headers=['*'])
 def submit():
+    print("got a request")
     username = request.form.get('username')
     password = request.form.get('password')
     region = request.form.get('region')
     mandatory_params=[username,password,region]
 
     if utils.validate_input(mandatory_params):
-        client_ip = utils.get_client_ip(request)
         try:
-            valorant_login = ValorantAPI(username, password, region, client_ip)
+            valorant_login = ValorantAPI(username, password, region)
             skins = valorant_login.player_store
             return render_template('skins.html', skins=skins)
         except Exception as error:
             flash(str(error)+'; Please try again')
-            return redirect(url_for('login'))
+        return redirect(url_for('login'))
     else:
         flash('Username/Password/Region cannot be empty')
         return redirect(url_for('login'))
